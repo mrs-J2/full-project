@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - My Todos</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="server-badge">Server #<span id="serverNumber"></span></div>
+        
+        <div class="app-header">
+            <div>
+                <h1>📝 My Todos</h1>
+                <p class="username">Welcome, <span id="username"></span></p>
+            </div>
+            <button onclick="logout()" class="btn btn-secondary">Logout</button>
+        </div>
+        
+        <div class="todo-card">
+            <form id="addTodoForm" class="add-todo-form">
+                <input type="text" id="todoTitle" placeholder="What needs to be done?" required>
+                <input type="text" id="todoDescription" placeholder="Description (optional)">
+                <button type="submit" class="btn btn-primary">Add Todo</button>
+            </form>
+            
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterTodos('all')">All</button>
+                <button class="filter-btn" onclick="filterTodos('pending')">Pending</button>
+                <button class="filter-btn" onclick="filterTodos('completed')">Completed</button>
+            </div>
+            
+            <div id="todoList" class="todo-list"></div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <p>No todos yet. Add one above!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="env.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

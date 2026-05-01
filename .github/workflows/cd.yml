@@ -1,0 +1,73 @@
+# .github/workflows/cd.yml
+name: CD — Build & Deploy to ECS
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build & Push Backend
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./todo_app-main/backend
+          push: true
+          tags: |
+            ${{ vars.ECR_BACKEND_URL }}:latest
+            ${{ vars.ECR_BACKEND_URL }}:sha-${{ github.sha }}
+
+      # Build & Push Frontend
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./todo_app-main/frontend
+          push: true
+          tags: |
+            ${{ vars.ECR_FRONTEND_URL }}:latest
+            ${{ vars.ECR_FRONTEND_URL }}:sha-${{ github.sha }}
+
+      # Deploy Backend ECS Service
+      - name: Deploy Backend Service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ vars.ECS_CLUSTER_NAME }} \
+            --service ${{ vars.ECS_BACKEND_SERVICE_NAME }} \
+            --force-new-deployment \
+            --region ${{ vars.AWS_REGION }}
+
+      # Deploy Frontend ECS Service
+      - name: Deploy Frontend Service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ vars.ECS_CLUSTER_NAME }} \
+            --service ${{ vars.ECS_FRONTEND_SERVICE_NAME }} \
+            --force-new-deployment \
+            --region ${{ vars.AWS_REGION }}
+
+      - name: Deployment Complete
+        run: echo "✅ Deployment triggered successfully for Backend and Frontend services."

@@ -1,0 +1,11 @@
+services:
+  todo-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "80:80"
+    env_file:
+      - .env
+    restart: unless-stopped
