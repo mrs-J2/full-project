@@ -1,17 +1,20 @@
 # .github/workflows/ci.yml
-name: CI — Build and Security Scan
+name: CI
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches: [ main, releases/** ]
 
 jobs:
-  build-and-scan:
+  ci:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -26,12 +29,13 @@ jobs:
           load: true
 
       - name: Scan Backend with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: backend:latest
-          format: table
-          severity: CRITICAL,HIGH
-          exit-code: 1
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            backend:latest
 
       # === Frontend ===
       - name: Build Frontend Image
@@ -43,12 +47,10 @@ jobs:
           load: true
 
       - name: Scan Frontend with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: frontend:latest
-          format: table
-          severity: CRITICAL,HIGH
-          exit-code: 1
-
-      - name: CI Summary
-        run: echo "✅ CI completed - Both images built and scanned successfully."
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            frontend:latest
